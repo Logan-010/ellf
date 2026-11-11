@@ -1,3 +1,11 @@
+lib: [
+  "_build/install/default/lib/ellf/META"
+  "_build/install/default/lib/ellf/dune-package"
+  "_build/install/default/lib/ellf/opam"
+]
 bin: [
   "_build/install/default/bin/lf"
+]
+doc: [
+  "_build/install/default/doc/ellf/LICENSE"
 ]
