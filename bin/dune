@@ -1,0 +1,5 @@
+(executable
+ (public_name lf)
+ (package ellf)
+ (name main)
+ (libraries digestif sqlite3))
