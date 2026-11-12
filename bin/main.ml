@@ -8,4 +8,5 @@ let () =
   else
     let db = Db.init ~path:cli.db () in
     ignore db;
-    ()
+
+    if cli.index then cli.args |> List.map Scan.index |> ignore else ()

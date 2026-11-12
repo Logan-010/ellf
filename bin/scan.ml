@@ -22,43 +22,17 @@ let hash_file path =
   let ic = open_in_bin path in
   Fun.protect ~finally:(fun () -> close_in ic) (fun () -> sum ic)
 
-let feed_length ctx n =
-  let buf = Bytes.create 8 in
-  let n = Int64.of_int n in
-
-  for i = 0 to 7 do
-    let byte = Int64.(to_int (logand (shift_right_logical n (8 * i)) 0xffL)) in
-    Bytes.set buf (7 - i) (Char.chr byte)
-  done;
-
-  Hash.feed_bytes ctx buf
-
-let feed_name ctx name =
-  ctx |> fun ctx ->
-  feed_length ctx (String.length name) |> fun ctx -> Hash.feed_string ctx name
-
 let entry_hash = function Dir (_, h, _) | File (_, h, _) -> h
+let entry_name = function Dir (n, _, _) | File (n, _, _) -> n
 
 let hash_directory entries =
-  let ctx = Hash.feed_string Hash.empty "D\000" in
-
-  let ctx =
-    Array.fold_left
-      (fun ctx entry ->
-        let name, tag =
-          match entry with
-          | Dir (path, _, _) -> (Filename.basename path, "D")
-          | File (path, _, _) -> (Filename.basename path, "F")
-        in
-
-        let ctx = Hash.feed_string ctx tag in
-        let ctx = feed_name ctx name in
-
-        Hash.feed_string ctx (Hash.to_raw_string (entry_hash entry)))
-      ctx entries
-  in
-
-  Hash.get ctx
+  Array.fold_left
+    (fun ctx entry ->
+      let ctx = Hash.feed_string ctx (Hash.to_raw_string (entry_hash entry)) in
+      let ctx = Hash.feed_string ctx (Filename.basename (entry_name entry)) in
+      Hash.feed_string ctx "\000")
+    Hash.empty entries
+  |> Hash.get
 
 let rec index_in_pool pool path =
   if Sys.is_directory path then (
