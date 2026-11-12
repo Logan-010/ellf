@@ -37,6 +37,7 @@
             ocamlPackages.sqlite3
             ocamlPackages.magic-mime
             ocamlPackages.domainslib
+            ocamlPackages.yojson
           ];
 
           # Libraries needed at compile-time
@@ -65,6 +66,7 @@
             ocamlPackages.sqlite3
             ocamlPackages.magic-mime
             ocamlPackages.domainslib
+            ocamlPackages.yojson
           ];
         };
       }

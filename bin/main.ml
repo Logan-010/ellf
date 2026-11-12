@@ -11,4 +11,4 @@ let () =
 
     if cli.index then
       cli.args |> List.map Scan.index |> List.map (Scan.place db) |> ignore
-    else cli |> Search.search db |> Display.display (not cli.colorless) cli.args
+    else cli |> Search.search db |> Display.display cli

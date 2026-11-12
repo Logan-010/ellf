@@ -16,10 +16,25 @@ let print_match color matches line =
          line matches
   else print_endline line
 
-let display color matches entries =
-  List.map
-    (fun (e : Search.entry) ->
-      print_filename color e.path;
-      List.iter (fun m -> print_match color matches m) e.file_content_matches)
-    entries
-  |> ignore
+let encode entries =
+  `List
+    (List.map
+       (fun (e : Search.entry) ->
+         `Assoc
+           [
+             ("path", `String e.path);
+             ( "matches",
+               `List (List.map (fun m -> `String m) e.file_content_matches) );
+           ])
+       entries)
+
+let display (cli : Cli.cli) entries =
+  if cli.json then entries |> encode |> Yojson.to_string |> print_endline
+  else
+    List.fold_left
+      (fun _ (e : Search.entry) ->
+        print_filename (not cli.colorless) e.path;
+        List.fold_left
+          (fun _ m -> print_match (not cli.colorless) cli.args m)
+          () e.file_content_matches)
+      () entries

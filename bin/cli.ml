@@ -10,6 +10,7 @@ type cli = {
   limit : int option;
   args : string list;
   colorless : bool;
+  json: bool;
 }
 
 let usage = "Usage: lf [OPTIONS] [QUERY]...\n\
@@ -27,6 +28,7 @@ let all_ref = ref false
 let limit_ref = ref None
 let args_ref = ref []
 let colorless_ref = ref false
+let json_ref = ref false
 
 let spec =
   [
@@ -52,6 +54,8 @@ let spec =
     ("-l", Arg.Int (fun i -> limit_ref := Some i), "Short for --limit");
     ("--colorless", Arg.Set colorless_ref, "No color when searching for entries");
     ("-C", Arg.Set colorless_ref, "No color when searching for entries");
+    ("--json", Arg.Set json_ref, "Output entires as JSON");
+    ("-j", Arg.Set json_ref, "Short for --json")
   ]
 
 let parse () =
@@ -66,6 +70,7 @@ let parse () =
   limit_ref := None;
   args_ref := [];
   colorless_ref := false;
+  json_ref := false;
 
   Arg.parse spec (fun a -> args_ref := !args_ref @ [ a ]) usage;
 
@@ -80,5 +85,6 @@ let parse () =
     dirs_only = !dirs_only_ref;
     limit = !limit_ref;
     args = !args_ref;
-    colorless = !colorless_ref
+    colorless = !colorless_ref;
+    json = !json_ref
   }

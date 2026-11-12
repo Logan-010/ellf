@@ -9,7 +9,8 @@ type cli = {
   all : bool;
   limit : int option;
   args : string list;
-  colorless : bool
+  colorless : bool;
+  json : bool
 }
 
 val usage : string
