@@ -3,6 +3,8 @@ type cli = {
   version : bool;
   db : string option;
   index : bool;
+  filter : string option;
+  all : bool;
   args : string list;
 }
 
@@ -10,9 +12,11 @@ let usage = "lf [-verbose] <path> [<path>] ..."
 let version = "lf v0.1.0"
 let help_ref = ref false
 let version_ref = ref false
-let index_ref = ref false
-let args_ref = ref []
 let db_ref = ref None
+let index_ref = ref false
+let filter_ref = ref None
+let all_ref = ref false
+let args_ref = ref []
 
 let spec =
   [
@@ -26,12 +30,18 @@ let spec =
       Arg.String (fun s -> db_ref := Some s),
       "Set path to the database" );
     ("-d", Arg.String (fun s -> db_ref := Some s), "Short for --database");
+    ("--filter", Arg.String (fun s -> filter_ref := Some s), "Set filter type");
+    ("-f", Arg.String (fun s -> filter_ref := Some s), "Short for --filter");
+    ("--all", Arg.Set help_ref, "Search matches all queries instead of any");
+    ("-a", Arg.Set help_ref, "Short for --all");
   ]
 
 let parse () =
   help_ref := false;
   version_ref := false;
+  db_ref := None;
   index_ref := false;
+  filter_ref := None;
   args_ref := [];
 
   Arg.parse spec (fun a -> args_ref := !args_ref @ [ a ]) usage;
@@ -41,5 +51,7 @@ let parse () =
     version = !version_ref;
     db = !db_ref;
     index = !index_ref;
+    filter = !filter_ref;
+    all = !all_ref;
     args = !args_ref;
   }

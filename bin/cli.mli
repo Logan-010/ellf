@@ -1,4 +1,4 @@
-type cli = { help : bool; version : bool; db: string option; index : bool; args : string list }
+type cli = { help : bool; version : bool; db: string option; index : bool; filter: string option; all: bool; args : string list }
 
 val usage : string
 val version : string
