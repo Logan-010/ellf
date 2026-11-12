@@ -1,1 +1,1 @@
-val display : bool -> Search.entry list -> unit
+val display : bool -> string list -> Search.entry list -> unit
