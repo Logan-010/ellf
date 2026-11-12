@@ -4,8 +4,10 @@ type cli = {
   db : string option;
   index : bool;
   filter : string option;
+  files_only : bool;
+  dirs_only : bool;
   all : bool;
-  limit: int option;
+  limit : int option;
   args : string list;
 }
 
@@ -16,6 +18,8 @@ let version_ref = ref false
 let db_ref = ref None
 let index_ref = ref false
 let filter_ref = ref None
+let files_only_ref = ref false
+let dirs_only_ref = ref false
 let all_ref = ref false
 let limit_ref = ref None
 let args_ref = ref []
@@ -34,10 +38,14 @@ let spec =
     ("-d", Arg.String (fun s -> db_ref := Some s), "Short for --database");
     ("--filter", Arg.String (fun s -> filter_ref := Some s), "Set filter type");
     ("-f", Arg.String (fun s -> filter_ref := Some s), "Short for --filter");
-    ("--all", Arg.Set help_ref, "Search matches all queries instead of any");
-    ("-a", Arg.Set help_ref, "Short for --all");
+    ("--files", Arg.Set files_only_ref, "Search for only files");
+    ("-F", Arg.Set files_only_ref, "Short for --files");
+    ("--dirs", Arg.Set dirs_only_ref, "Search for only dirs");
+    ("-D", Arg.Set dirs_only_ref, "Short for --dirs");
+    ("--all", Arg.Set all_ref, "Search matches all queries instead of any");
+    ("-a", Arg.Set all_ref, "Short for --all");
     ("--limit", Arg.Int (fun i -> limit_ref := Some i), "Limit results returned");
-    ("-l", Arg.Int (fun i -> limit_ref := Some i), "Short for --limit")
+    ("-l", Arg.Int (fun i -> limit_ref := Some i), "Short for --limit");
   ]
 
 let parse () =
@@ -47,6 +55,8 @@ let parse () =
   index_ref := false;
   filter_ref := None;
   all_ref := false;
+  files_only_ref := false;
+  dirs_only_ref := false;
   limit_ref := None;
   args_ref := [];
 
@@ -59,6 +69,8 @@ let parse () =
     index = !index_ref;
     filter = !filter_ref;
     all = !all_ref;
+    files_only = !files_only_ref;
+    dirs_only = !dirs_only_ref;
     limit = !limit_ref;
     args = !args_ref;
   }

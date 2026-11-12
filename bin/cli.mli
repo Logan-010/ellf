@@ -4,6 +4,8 @@ type cli = {
   db : string option;
   index : bool;
   filter : string option;
+  files_only: bool;
+  dirs_only: bool;
   all : bool;
   limit : int option;
   args : string list;

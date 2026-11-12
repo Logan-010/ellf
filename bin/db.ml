@@ -107,6 +107,43 @@ let find_dir db path hash =
   find_entry db "SELECT id FROM directories WHERE path = ? AND hash = ? LIMIT 1"
     path hash
 
+let list_entries db names all =
+  let matches =
+    match names with
+    | [] -> if all then "1" else "0"
+    | _ ->
+        names
+        |> List.map (fun _ -> "instr(path, ?) > 0")
+        |> String.concat (if all then " AND " else " OR ")
+  in
+  let sql =
+    "SELECT is_file, path, file_type FROM (SELECT 1 AS is_file, path, file_type FROM files UNION ALL \
+     SELECT 0 AS is_file, path, NULL AS file_type FROM directories) WHERE ("
+    ^ matches ^ ")"
+  in
+  let stmt = Sqlite3.prepare db sql in
+  Fun.protect
+    ~finally:(fun () -> ignore (Sqlite3.finalize stmt))
+    (fun () ->
+      List.iteri
+        (fun i name -> Sqlite3.bind_text stmt (i + 1) name |> rc_to_err db)
+        names;
+      let rec collect entries =
+        match Sqlite3.step stmt with
+        | Sqlite3.Rc.ROW ->
+            let is_file = Sqlite3.column_int stmt 0 = 1 in
+            let path = Sqlite3.column_text stmt 1 in
+            let file_type =
+              if is_file then Some (Sqlite3.column_text stmt 2) else None
+            in
+            collect ((is_file, path, file_type) :: entries)
+        | Sqlite3.Rc.DONE -> List.rev entries
+        | rc ->
+            rc_to_err db rc;
+            List.rev entries
+      in
+      collect [])
+
 let insert_file db path hash file_type dir =
   let stmt =
     Sqlite3.prepare db
