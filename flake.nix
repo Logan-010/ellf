@@ -35,6 +35,8 @@
           propagatedBuildInputs = [
             ocamlPackages.digestif
             ocamlPackages.sqlite3
+            ocamlPackages.magic-mime
+            ocamlPackages.domainslib
           ];
 
           # Libraries needed at compile-time
@@ -61,6 +63,8 @@
             # Deps
             ocamlPackages.digestif
             ocamlPackages.sqlite3
+            ocamlPackages.magic-mime
+            ocamlPackages.domainslib
           ];
         };
       }

@@ -17,6 +17,6 @@
  (name ellf)
  (synopsis "Fast file finding")
  (description "Search through a smart index of your local files")
- (depends ocaml digestif sqlite3)
+ (depends ocaml digestif sqlite3 magic-mime domainslib)
  (tags
   (sqlite search index)))
