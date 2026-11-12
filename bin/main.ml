@@ -12,4 +12,4 @@ let () =
     if cli.index then
       cli.args |> List.map Scan.index |> List.map (Scan.place db) |> ignore
     else
-      cli.args |> Search.search db cli.filter cli.all |> ignore 
+      cli |> Search.search db |> ignore 

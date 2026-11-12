@@ -5,6 +5,7 @@ type cli = {
   index : bool;
   filter : string option;
   all : bool;
+  limit: int option;
   args : string list;
 }
 
@@ -16,6 +17,7 @@ let db_ref = ref None
 let index_ref = ref false
 let filter_ref = ref None
 let all_ref = ref false
+let limit_ref = ref None
 let args_ref = ref []
 
 let spec =
@@ -34,6 +36,8 @@ let spec =
     ("-f", Arg.String (fun s -> filter_ref := Some s), "Short for --filter");
     ("--all", Arg.Set help_ref, "Search matches all queries instead of any");
     ("-a", Arg.Set help_ref, "Short for --all");
+    ("--limit", Arg.Int (fun i -> limit_ref := Some i), "Limit results returned");
+    ("-l", Arg.Int (fun i -> limit_ref := Some i), "Short for --limit")
   ]
 
 let parse () =
@@ -42,6 +46,8 @@ let parse () =
   db_ref := None;
   index_ref := false;
   filter_ref := None;
+  all_ref := false;
+  limit_ref := None;
   args_ref := [];
 
   Arg.parse spec (fun a -> args_ref := !args_ref @ [ a ]) usage;
@@ -53,5 +59,6 @@ let parse () =
     index = !index_ref;
     filter = !filter_ref;
     all = !all_ref;
+    limit = !limit_ref;
     args = !args_ref;
   }

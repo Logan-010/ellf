@@ -1,1 +1,1 @@
-let search db filter all targets = ()
+let search db cli = ()
