@@ -9,9 +9,12 @@ type cli = {
   all : bool;
   limit : int option;
   args : string list;
+  colorless : bool;
 }
 
-let usage = "lf [-verbose] <path> [<path>] ..."
+let usage = "Usage: lf [OPTIONS] [QUERY]...\n\
+            \n\
+            Search through a smart index of your local files"
 let version = "lf v0.1.0"
 let help_ref = ref false
 let version_ref = ref false
@@ -23,6 +26,7 @@ let dirs_only_ref = ref false
 let all_ref = ref false
 let limit_ref = ref None
 let args_ref = ref []
+let colorless_ref = ref false
 
 let spec =
   [
@@ -30,7 +34,7 @@ let spec =
     ("-h", Arg.Set help_ref, "Short for --help");
     ("--version", Arg.Set version_ref, "Show the version");
     ("-v", Arg.Set version_ref, "Short for --version");
-    ("--index", Arg.Set index_ref, "Index dindex_refectories");
+    ("--index", Arg.Set index_ref, "Index directories");
     ("-i", Arg.Set index_ref, "Short for --index");
     ( "--database",
       Arg.String (fun s -> db_ref := Some s),
@@ -46,6 +50,8 @@ let spec =
     ("-a", Arg.Set all_ref, "Short for --all");
     ("--limit", Arg.Int (fun i -> limit_ref := Some i), "Limit results returned");
     ("-l", Arg.Int (fun i -> limit_ref := Some i), "Short for --limit");
+    ("--colorless", Arg.Set colorless_ref, "No color when searching for entries");
+    ("-C", Arg.Set colorless_ref, "No color when searching for entries");
   ]
 
 let parse () =
@@ -59,6 +65,7 @@ let parse () =
   dirs_only_ref := false;
   limit_ref := None;
   args_ref := [];
+  colorless_ref := false;
 
   Arg.parse spec (fun a -> args_ref := !args_ref @ [ a ]) usage;
 
@@ -73,4 +80,5 @@ let parse () =
     dirs_only = !dirs_only_ref;
     limit = !limit_ref;
     args = !args_ref;
+    colorless = !colorless_ref
   }

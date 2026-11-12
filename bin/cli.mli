@@ -9,6 +9,7 @@ type cli = {
   all : bool;
   limit : int option;
   args : string list;
+  colorless : bool
 }
 
 val usage : string
