@@ -65,3 +65,14 @@ let index path =
   Fun.protect
     ~finally:(fun () -> Task.teardown_pool pool)
     (fun () -> Task.run pool (fun () -> index_in_pool pool path))
+
+let place db meta =
+  let rec place' db meta pid =
+    match meta with
+    | File (p, h, t) -> Db.insert_file db p (Hash.to_raw_string h) t pid
+    | Dir (p, h, c) ->
+        Db.insert_dir db p (Hash.to_raw_string h) |> Option.some |> fun id ->
+        ignore @@ List.map (fun e -> place' db e id) c
+  in
+
+  place' db meta None
