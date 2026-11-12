@@ -7,6 +7,16 @@ let rc_to_err db = function
 
 let exec db sql = Sqlite3.exec db sql |> rc_to_err db
 
+let with_transaction db f =
+  exec db "BEGIN IMMEDIATE;";
+  try
+    let result = f () in
+    exec db "COMMIT;";
+    result
+  with exn ->
+    exec db "ROLLBACK;";
+    raise exn
+
 let migration_1 =
   {|CREATE TABLE IF NOT EXISTS directories (
       id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -75,47 +85,58 @@ let init ?(path = None) () =
     ignore (Sqlite3.db_close db);
     raise exn
 
+let find_entry db sql path hash =
+  let stmt = Sqlite3.prepare db sql in
+  Fun.protect
+    ~finally:(fun () -> ignore (Sqlite3.finalize stmt))
+    (fun () ->
+      Sqlite3.bind_text stmt 1 path |> rc_to_err db;
+      Sqlite3.bind_blob stmt 2 hash |> rc_to_err db;
+      match Sqlite3.step stmt with
+      | Sqlite3.Rc.ROW -> Some (Sqlite3.column_int64 stmt 0)
+      | Sqlite3.Rc.DONE -> None
+      | rc ->
+          rc_to_err db rc;
+          None)
+
+let find_file db path hash =
+  find_entry db "SELECT id FROM files WHERE path = ? AND hash = ? LIMIT 1"
+    path hash
+
+let find_dir db path hash =
+  find_entry db "SELECT id FROM directories WHERE path = ? AND hash = ? LIMIT 1"
+    path hash
+
 let insert_file db path hash file_type dir =
-  exec db "BEGIN IMMEDIATE;";
-  try
-    let stmt =
-      Sqlite3.prepare db
-        "INSERT INTO files (path, hash, file_type, directory_id) VALUES (?, ?, \
-         ?, ?)"
-    in
-    Fun.protect
-      ~finally:(fun () -> ignore (Sqlite3.finalize stmt))
-      (fun () ->
-        Sqlite3.bind_text stmt 1 path |> rc_to_err db;
-        Sqlite3.bind_blob stmt 2 hash |> rc_to_err db;
-        Sqlite3.bind_text stmt 3 file_type |> rc_to_err db;
-        (match dir with
-          | Some id -> Sqlite3.bind_int64 stmt 4 id
-          | None -> Sqlite3.bind stmt 4 Sqlite3.Data.NULL)
-        |> rc_to_err db;
-        Sqlite3.step stmt |> rc_to_err db);
-    exec db "COMMIT;"
-  with exn ->
-    exec db "ROLLBACK;";
-    raise exn
+  let stmt =
+    Sqlite3.prepare db
+      "INSERT INTO files (path, hash, file_type, directory_id) VALUES (?, ?, \
+       ?, ?)"
+  in
+  Fun.protect
+    ~finally:(fun () -> ignore (Sqlite3.finalize stmt))
+    (fun () ->
+      Sqlite3.bind_text stmt 1 path |> rc_to_err db;
+      Sqlite3.bind_blob stmt 2 hash |> rc_to_err db;
+      Sqlite3.bind_text stmt 3 file_type |> rc_to_err db;
+      (match dir with
+        | Some id -> Sqlite3.bind_int64 stmt 4 id
+        | None -> Sqlite3.bind stmt 4 Sqlite3.Data.NULL)
+      |> rc_to_err db;
+      match Sqlite3.step stmt with
+      | Sqlite3.Rc.DONE -> ()
+      | rc -> rc_to_err db rc)
 
 let insert_dir db path hash =
-  exec db "BEGIN IMMEDIATE;";
-  try
-    let stmt =
-      Sqlite3.prepare db "INSERT INTO directories (path, hash) VALUES (?, ?)"
-    in
-    let id =
-      Fun.protect
-        ~finally:(fun () -> ignore (Sqlite3.finalize stmt))
-        (fun () ->
-          Sqlite3.bind_text stmt 1 path |> rc_to_err db;
-          Sqlite3.bind_blob stmt 2 hash |> rc_to_err db;
-          Sqlite3.step stmt |> rc_to_err db;
-          Sqlite3.last_insert_rowid db)
-    in
-    exec db "COMMIT;";
-    id
-  with exn ->
-    exec db "ROLLBACK;";
-    raise exn
+  let stmt =
+    Sqlite3.prepare db "INSERT INTO directories (path, hash) VALUES (?, ?)"
+  in
+  Fun.protect
+    ~finally:(fun () -> ignore (Sqlite3.finalize stmt))
+    (fun () ->
+      Sqlite3.bind_text stmt 1 path |> rc_to_err db;
+      Sqlite3.bind_blob stmt 2 hash |> rc_to_err db;
+      (match Sqlite3.step stmt with
+      | Sqlite3.Rc.DONE -> ()
+      | rc -> rc_to_err db rc);
+      Sqlite3.last_insert_rowid db)

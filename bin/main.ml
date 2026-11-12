@@ -9,4 +9,5 @@ let () =
     let db = Db.init ~path:cli.db () in
     ignore db;
 
-    if cli.index then cli.args |> List.map Scan.index |> ignore else ()
+    if cli.index then
+      cli.args |> List.map Scan.index |> List.map (Scan.place db) |> ignore

@@ -1,4 +1,10 @@
-type cli = { help : bool; version : bool; db: string option; index : bool; args : string list }
+type cli = {
+  help : bool;
+  version : bool;
+  db : string option;
+  index : bool;
+  args : string list;
+}
 
 let usage = "lf [-verbose] <path> [<path>] ..."
 let version = "lf v0.1.0"
@@ -16,8 +22,10 @@ let spec =
     ("-v", Arg.Set version_ref, "Short for --version");
     ("--index", Arg.Set index_ref, "Index dindex_refectories");
     ("-i", Arg.Set index_ref, "Short for --index");
-    ("--database", Arg.String (fun s -> db_ref := Some s), "Set path to the database");
-    ("-d", Arg.String (fun s -> db_ref := Some s), "Short for --database")
+    ( "--database",
+      Arg.String (fun s -> db_ref := Some s),
+      "Set path to the database" );
+    ("-d", Arg.String (fun s -> db_ref := Some s), "Short for --database");
   ]
 
 let parse () =

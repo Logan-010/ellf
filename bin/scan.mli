@@ -3,3 +3,5 @@ type file_meta =
   | File of string * Digestif.BLAKE3.t * string
 
 val index : string -> file_meta 
+
+val place : Sqlite3.db -> file_meta -> unit

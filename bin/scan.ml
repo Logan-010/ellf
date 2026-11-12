@@ -57,7 +57,29 @@ let rec index_in_pool pool path =
     File (path, hash, mime)
   else failwith ("Path does not exist: " ^ path)
 
+let absolute_path path =
+  let path =
+    if Filename.is_relative path then Filename.concat (Sys.getcwd ()) path
+    else path
+  in
+  let rec split path parts =
+    let parent = Filename.dirname path in
+    if parent = path then (path, parts)
+    else split parent (Filename.basename path :: parts)
+  in
+  let root, parts = split path [] in
+  let parts =
+    List.fold_left
+      (fun parts -> function
+        | "." -> parts
+        | ".." -> (match parts with [] -> [] | _ :: rest -> rest)
+        | name -> name :: parts)
+      [] parts
+  in
+  List.fold_left Filename.concat root (List.rev parts)
+
 let index path =
+  let path = absolute_path path in
   let num_domains = max 1 (Domain.recommended_domain_count ()) in
 
   let pool = Task.setup_pool ~num_domains:(num_domains - 1) () in
@@ -69,10 +91,19 @@ let index path =
 let place db meta =
   let rec place' db meta pid =
     match meta with
-    | File (p, h, t) -> Db.insert_file db p (Hash.to_raw_string h) t pid
+    | File (p, h, t) ->
+        let hash = Hash.to_raw_string h in
+        (match Db.find_file db p hash with
+        | Some _ -> ()
+        | None -> Db.insert_file db p hash t pid)
     | Dir (p, h, c) ->
-        Db.insert_dir db p (Hash.to_raw_string h) |> Option.some |> fun id ->
-        ignore @@ List.map (fun e -> place' db e id) c
+        let hash = Hash.to_raw_string h in
+        let id =
+          match Db.find_dir db p hash with
+          | Some id -> id
+          | None -> Db.insert_dir db p hash
+        in
+        List.iter (fun e -> place' db e (Some id)) c
   in
 
-  place' db meta None
+  Db.with_transaction db (fun () -> place' db meta None)
